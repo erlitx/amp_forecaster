@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Flasky - {{ user.username }}{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h3>Username: {{ user.username }} </h3>
+    </br>
+
+    <p>Member since: {{ moment(user.member_since).format('LL') }}. </p>
+    <p>Last login: {{ moment(user.last_seen).fromNow() }}.</p>
+</div>
+
+
+{% endblock %}

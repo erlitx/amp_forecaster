@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<br/>
+<h3>PSQL</h3>
+
+
+<table class="table table-hover table-bordered table-striped">
+                <tr>
+                <td>Int Ref</td>
+                <td>Name</td>
+                <td>Qty</td>
+                </tr>
+        {% for r in result %}
+                <tr>
+                <td>{{ r.sku }}</td>
+                <td>{{ r.title }}</td>
+                <td>{{ r.stock }}</td>
+                </tr>
+        {% endfor %}
+        </tr>
+</table>
+
+{% endblock %}

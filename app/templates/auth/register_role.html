@@ -1,0 +1,36 @@
+{% extends "/auth/base.html" %}
+
+{% block content %}
+<br/>
+<div class="page-header" align="center">
+
+    <h3>Register New Role</h3>
+</div>
+<div class="container">
+
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-4">
+            {{ form.hidden_tag()}}}
+            {{ form.email.label(class="form-label") }}
+            {{ form.email(class="form-control") }}
+            {{ form.password.label(class="form-label") }}
+            {{ form.password(class="form-control") }}
+            {{ form.remember_me(class="form-check-input") }}
+            {{ form.remember_me.label(class="form-check-label") }}
+        </div>
+</div>
+
+    <h3>User list</h3>
+</div>
+<div class="container" align="center">
+{% for role in roles %}
+    <ul>
+        <li>{{ role.id }} - {{ role.name }}</li>
+
+    </ul>
+{% endfor %}
+
+</div>
+
+{% endblock %}
