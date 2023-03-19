@@ -29,8 +29,10 @@ def create_app(config_name):
     loging_manager.init_app(app)
 
 
-    from .main.views import main as main_blueprint
-    from .auth.views import auth as auth_blueprint
+    from .main import main as main_blueprint
+    from .auth import auth as auth_blueprint
+    from .api import api as api_blueprint
     app.register_blueprint(main_blueprint)
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
+    app.register_blueprint(api_blueprint, url_prefix='/api/v1')
     return app

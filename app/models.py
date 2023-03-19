@@ -40,6 +40,15 @@ class User(db.Model, UserMixin):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
 
+    def to_json(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'role_name': self.role.name,
+            'confirmed': self.confirmed,
+        }
+
     @property
     def password(self):
         raise AttributeError('password is not a readable attribute')
@@ -54,6 +63,10 @@ class User(db.Model, UserMixin):
     def generate_confirmation_token(self):
         s = Serializer(current_app.config['SECRET_KEY'])
         return s.dumps({'confirm': self.id})
+
+    def generate_auth_token(self):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        return s.dumps({'id': self.id})
 
     def confirm(self, token):
         s = Serializer(current_app.config['SECRET_KEY'])

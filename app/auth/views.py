@@ -7,7 +7,7 @@ from .forms import RoleForm, UserForm, RegistrationForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from .. import db
 from flask_login import login_user, logout_user, login_required, current_user
-
+from ..api.authentication import auth_api
 
 # This route takes two arguments, token and user_id (passed as **kwargs in the send_email func as user=user and token=token)
 # In email html user=user is passed and there is a link generarted user_id=user.id and token=token is passed as token=token
