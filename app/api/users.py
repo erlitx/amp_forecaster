@@ -1,6 +1,6 @@
-from flask import Response, json, jsonify
+from flask import Response, json, jsonify, request, redirect, url_for
 from . import api
-from ..models import User
+from ..models import User, Role
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -21,3 +21,16 @@ def get_user_secure(username, password):
         return jsonify(user)
     else:
         return 'Bad password'
+
+@api.route('/user_create/')
+def user_create():
+    username = request.args.get('username')
+    email = request.args.get('email')
+    password = request.args.get('password')
+    role_id = request.args.get('role_id')
+    password_hash = generate_password_hash(password, 'sha256')
+    role = Role.query.filter_by(name=role_id).first()
+    if role is None:
+        return 'Role not found', 400
+    user = User.create_user(username, email, password_hash, role.id)
+    return 'User created', 201

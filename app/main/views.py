@@ -12,7 +12,10 @@ from flask_login import login_required, current_user
 def index():
     return render_template('index.html')
 
+
+
 @main.route('/user/<username>', methods=['GET', 'POST'])
+@login_required
 def user(username):
     form = UserForm()
     form_about = AboutForm()

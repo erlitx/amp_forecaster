@@ -1,0 +1,101 @@
+from flask import Response, json, jsonify, request, redirect, url_for
+from . import api
+from ..data_base.models import Product, Warehouse, Inventory
+from werkzeug.security import generate_password_hash, check_password_hash
+from .. import db
+
+@api.route('/add_product/<string:int_ref>/<string:name>')
+def add_product(int_ref, name):
+    product = Product.add_product(int_ref=int_ref, name=name)
+    product_dict = product.to_dict()
+    return jsonify(product_dict)
+
+
+@api.route('/add_inventory/<string:int_ref>/<int:quantity>/<path:location_name>')
+def add_inventory(int_ref, quantity, location_name):
+    product = Product.query.filter_by(int_ref=int_ref).first()
+    warehouse = Warehouse.query.filter_by(location_name=location_name).first()
+    if not product:
+        add_product(int_ref=int_ref, name='Just created')
+        product = Product.query.filter_by(int_ref=int_ref).first()
+    if not warehouse:
+        add_warehouse(location_name=location_name)
+        warehouse = Warehouse.query.filter_by(location_name=location_name).first()
+    inventory = Inventory.add_inventory(product_id=product.id, warehouse_id=warehouse.id, quantity=quantity)
+    inventory_dict = inventory.to_dict()
+    return jsonify(inventory_dict)
+
+
+@api.route('/add_warehouse/<path:location_name>')
+def add_warehouse(location_name):
+    warehouse = Warehouse.add_warehouse(location_name=location_name)
+    warehouse_dict = warehouse.to_dict()
+    return jsonify(warehouse_dict)
+
+
+@api.route('/get_inventory')
+def get_inventory_all():
+    inventory = Inventory.query.all()
+    inventory_list = [inventory.to_dict() for inventory in inventory]
+    return jsonify(inventory_list)
+
+@api.route('/get_inventory_all/<string:int_ref>/<path:location_name>')
+def get_inventory_last(int_ref, location_name):
+    return Inventory.get_inventory(int_ref=int_ref, location_name=location_name)
+
+@api.route('/get_product/<string:int_ref>')
+def get_product(int_ref):
+    product = Product.query.filter_by(int_ref=int_ref).first()
+    if not product:
+        return "Error: product not found", 404
+    product = product.to_dict()
+    return jsonify(product)
+
+
+@api.route('/get_products')
+def get_products():
+    products = Product.query.all()
+    products_list = [product.to_dict() for product in products]
+    return jsonify(products_list)
+
+@api.route('/warehouse')
+def get_warehouses():
+    warehouse = Warehouse(location_name='PS/Prepair')
+    db.session.add(warehouse)
+    db.session.commit()
+    warehouses = Warehouse.query.all()
+    warehouses_list = [warehouse.to_dict() for warehouse in warehouses]
+    return jsonify(warehouses_list)
+
+
+# Test func to get all inventory by product using Inventory model instead of Product model
+@api.route('/get_product_by_inv/<string:int_ref>')
+def get_product_by_inv(int_ref):
+    product = Product.query.filter_by(int_ref=int_ref).first()
+    if not product:
+        return "Error: product not found", 404
+    inventory_list = Inventory.query.filter_by(product_id=product.id).all()
+    inventory = [inventory.to_dict() for inventory in inventory_list]
+    return jsonify(inventory)
+
+@api.route('/get_inventory_by_product/<string:int_ref>')
+def get_inventory_by_product(int_ref):
+    product = Product.query.filter_by(int_ref=int_ref).first()
+    if not product:
+        return "Error: product not found", 404
+    inventory = product.to_dict()
+    return jsonify(inventory)
+
+
+# @api.route('/add_inventory')
+# def add_inventory():
+#     # Retrieve the product and warehouse instances
+#     product = Product.query.filter_by(int_ref='AMP-001').first()
+#     warehouse = Warehouse.query.filter_by(location_name='AMPRU/Stock').first()
+#     if not product or not warehouse:
+#         return "Error: product or warehouse not found", 404
+#     inventory = Inventory(product_id=product.id, warehouse_id=warehouse.id, quantity=10)
+#     db.session.add(inventory)
+#     db.session.commit()
+#
+#     return "Inventory added successfully", 200

@@ -77,7 +77,7 @@ def logout():
 
 @auth.route('/register_role', methods=['GET', 'POST'])
 def register_role():
-    roles = Role.query.order_by(Role.id.desc()).all()
+    roles = Role.query.order_by(Role.id).all()
     form_role = RoleForm()
 
     if form_role.validate_on_submit():

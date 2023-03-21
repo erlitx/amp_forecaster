@@ -13,7 +13,6 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
@@ -35,6 +34,13 @@ class User(db.Model, UserMixin):
     location = db.Column(db.String(64))
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @staticmethod
+    def create_user(username, email, password, role_id):
+        user = User(username=username, email=email, password_hash=password, role_id=role_id, confirmed=True)
+        db.session.add(user)
+        db.session.commit()
+        return user
 
     def ping(self):
         self.last_seen = datetime.utcnow()
@@ -67,6 +73,15 @@ class User(db.Model, UserMixin):
     def generate_auth_token(self):
         s = Serializer(current_app.config['SECRET_KEY'])
         return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return None
+        return User.query.get(data['id'])
 
     def confirm(self, token):
         s = Serializer(current_app.config['SECRET_KEY'])

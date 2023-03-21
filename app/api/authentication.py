@@ -1,8 +1,8 @@
-from flask import g, jsonify
+from flask import g, jsonify, session
 from flask_httpauth import HTTPBasicAuth
 from ..models import User
 from . import api
-
+from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
 
 auth_api = HTTPBasicAuth()
 
@@ -11,34 +11,45 @@ auth_api = HTTPBasicAuth()
 def verify_password(username, password):
     # Here, you should verify the provided username and password against your user database.
     # For demonstration purposes, we are using a simple check.
-    if username == 'user' and password == '1234':
+    if username == 'erlit007' and password == '123':
+        user = User.query.filter_by(username=username).first()
+        session['user_id'] = user.id
         return True
     return False
 
 
 # This route function requires authentication
+# user.genereate_auth_token() generate a serialezied dict {'id':'self.id'} self.id is the user a particular object
+# to deserialize the dict use User.verify_auth_token(token) return a self.id = user object
+
+
 @api.route('/secure')
 @auth_api.login_required
 def secure_route():
-    return jsonify({"message": "This is a secure route."})
+    return 'You are logged in'
 
 
-# @auth.verify_password
-# def verify_password(email_or_token, password):
-#     if email_or_token == '':
-#         return False
-#     if password == '':
-#         g.current_user = User.verify_auth_token(email_or_token)
-#         g.token_used = True
-#         return g.current_user is not None
-#     user = User.query.filter_by(email=email_or_token.lower()).first()
-#     if not user:
-#         return False
-#     g.current_user = user
-#     g.token_used = False
-#     return user.verify_password(password)
+# @api.route('/secure')
+# @auth_api.login_required
+# def secure_route():
+#     if session['user_id'] is None:
+#         return 'Not user_id in session'
+#     user_id = session.get('user_id')
+#     user = User.query.get(user_id)
+#     token = user.generate_auth_token()
 #
-#
-# @auth.error_handler
-# def auth_error():
-#     return unauthorized('Invalid credentials')
+#     user_token_verified = User.verify_auth_token(token)
+#     return jsonify({'user_id': user_token_verified.id, 'user_token_verified': user_token_verified.username, 'token': token})
+
+@api.route('/get_token')
+def get_token():
+    s = Serializer('secret-key')
+    token = s.dumps('some secret text')
+    s = Serializer('secret-key')
+    text = s.loads(token)
+    return text
+
+
+@auth_api.error_handler
+def auth_error():
+    return 'Invalid credentials'
