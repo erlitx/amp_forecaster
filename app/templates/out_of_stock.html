@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header" align="left">
+
+    <h3>Out of stock</h3>
+
+</div>
+
+<br/>
+<div class="container">
+
+
+    <table class="table table-hover table-bordered table-striped">
+        <tr style="background-color: lightgrey;">
+            <th rowspan="2" style="width: 100px;">Int Ref</th>
+            <th rowspan="2" style="width: 200px;">Name</th>
+            <th colspan="3" >AMPRU/Stock</th>
+            <th>PS/Prepair</th>
+            <th>SS/Market</th>
+            <th>SS/Edu</th>
+            <th>PS/Kits</th>
+        </tr>
+        <tr style="background-color: lightgrey;">
+
+            <td style="width: 100px;">Available</td>
+            <td style="width: 100px;">QoH</td>
+            <td style="width: 100px;">Reserved</td>
+            <td style="width: 100px;">QoH</td>
+            <td style="width: 100px;">QoH</td>
+            <td style="width: 100px;">QoH</td>
+            <td style="width: 100px;">QoH</td>
+        </tr>
+        <tr>
+            <td>{{ table_list["product_int_ref"] }}</td>
+            <td>{{ table_list["product_name"] }}</td>
+            <td>{{ table_list["quantity"] }}</td>
+            <td>{% if table_list["location_name"] == "AMPRU/Stock" %} {{ table_list["quantity"] }} {% endif %}</td>
+            <td>0</td>
+            <td>5</td>
+            <td>23</td>
+            <td>25</td>
+            <td>25</td>
+        </tr>
+
+        </table>
+</div>
+
+<pre>
+    {{ inventory_list | safe }}
+</pre>
+<br/>
+<pre>
+    {{ inventory | safe }}
+</pre>
+{% endblock %}

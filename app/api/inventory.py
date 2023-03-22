@@ -3,6 +3,7 @@ from . import api
 from ..data_base.models import Product, Warehouse, Inventory
 from werkzeug.security import generate_password_hash, check_password_hash
 from .. import db
+from sqlalchemy import desc, func
 
 @api.route('/add_product/<string:int_ref>/<string:name>')
 def add_product(int_ref, name):
@@ -41,7 +42,14 @@ def get_inventory_all():
 
 @api.route('/get_inventory_all/<string:int_ref>/<path:location_name>')
 def get_inventory_last(int_ref, location_name):
-    return Inventory.get_inventory(int_ref=int_ref, location_name=location_name)
+    return jsonify(Inventory.get_inventory(int_ref=int_ref, location_name=location_name))
+
+
+@api.route('/get_last_stock/<string:int_ref>')
+def get_inventory_by_location(int_ref):
+
+    return jsonify(Inventory.get_inventory_by_locations(int_ref=int_ref))
+
 
 @api.route('/get_product/<string:int_ref>')
 def get_product(int_ref):
@@ -85,6 +93,42 @@ def get_inventory_by_product(int_ref):
         return "Error: product not found", 404
     inventory = product.to_dict()
     return jsonify(inventory)
+
+
+@api.route('/current_inventory')
+def current_inventory():
+    inventory = Inventory.current_stock()
+    return jsonify(inventory)
+
+
+@api.route('/test_query/<string:int_ref>')
+def test_query(int_ref):
+    # inventory = (db.session.query(Inventory).join(Product).filter(Product.int_ref == int_ref).first())
+    # inventory = db.session.query(Inventory).filter(Inventory.inventory_date >= '2023-03-22 09:00:00').all()
+    inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).all()
+    # inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).limit(1).all()
+    # inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).first()
+    warehouse_list = [item.location_name for item in db.session.query(Warehouse).all()]
+    product_list = [item.int_ref for item in db.session.query(Product).all()]
+    print(warehouse_list)
+    print(product_list)
+    inventory = []
+    for warehouse in warehouse_list:
+        for product in product_list:
+            inventories = db.session.query(Inventory)\
+                        .join(Product)\
+                        .join(Warehouse)\
+                        .filter(Product.int_ref == product)\
+                        .filter(Warehouse.location_name == warehouse)\
+                        .order_by(desc(Inventory.inventory_date))\
+                        .first()
+            if inventories is not None:
+                inventory.append(inventories.to_dict())
+    return jsonify(inventory)
+
+    # if not isinstance(inventory, list):
+    #     return jsonify(inventory.to_dict())
+    # return jsonify([product_result.to_dict() for product_result in inventory])
 
 
 # @api.route('/add_inventory')

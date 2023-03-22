@@ -1,3 +1,9 @@
+from .models import Product, Warehouse, Inventory
+from .. import db
+from sqlalchemy import desc, func
+
+
+print(Product.query.all())
 from .. import db
 from flask import current_app, jsonify
 from datetime import datetime
@@ -22,12 +28,6 @@ class Product(db.Model):
             "int_ref": self.int_ref,
             "name": self.name,
             "inventory": [inventory_item.to_dict() for inventory_item in self.inventory]
-        }
-
-    def to_dict_simple(self):
-        return {
-            "int_ref": self.int_ref,
-            "name": self.name
         }
 
     def __repr__(self):
@@ -137,24 +137,6 @@ class Inventory(db.Model):
             })
 
         return result
-    @staticmethod
-    def current_stock():
-        inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).all()
-        warehouse_list = [item.location_name for item in db.session.query(Warehouse).all()]
-        product_list = [item.int_ref for item in db.session.query(Product).all()]
-        inventory = []
-        for warehouse in warehouse_list:
-            for product in product_list:
-                inventories = db.session.query(Inventory) \
-                    .join(Product) \
-                    .join(Warehouse) \
-                    .filter(Product.int_ref == product) \
-                    .filter(Warehouse.location_name == warehouse) \
-                    .order_by(desc(Inventory.inventory_date)) \
-                    .first()
-                if inventories is not None:
-                    inventory.append(inventories.to_dict())
-        return inventory
 
     def __repr__(self):
         return '<Inventory: prod: {} qty: {} at {} on {}>'.format(self.product.int_ref, self.quantity,
