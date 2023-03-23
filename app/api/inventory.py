@@ -100,7 +100,13 @@ def current_inventory():
     inventory = Inventory.current_stock()
     return jsonify(inventory)
 
+# Testing
+@api.route('/current_inventory2')
+def current_inventory2():
+    inventory = Inventory.current_stock_nested()
+    return jsonify(inventory)
 
+# Testing
 @api.route('/test_query/<string:int_ref>')
 def test_query(int_ref):
     # inventory = (db.session.query(Inventory).join(Product).filter(Product.int_ref == int_ref).first())
@@ -125,21 +131,3 @@ def test_query(int_ref):
             if inventories is not None:
                 inventory.append(inventories.to_dict())
     return jsonify(inventory)
-
-    # if not isinstance(inventory, list):
-    #     return jsonify(inventory.to_dict())
-    # return jsonify([product_result.to_dict() for product_result in inventory])
-
-
-# @api.route('/add_inventory')
-# def add_inventory():
-#     # Retrieve the product and warehouse instances
-#     product = Product.query.filter_by(int_ref='AMP-001').first()
-#     warehouse = Warehouse.query.filter_by(location_name='AMPRU/Stock').first()
-#     if not product or not warehouse:
-#         return "Error: product or warehouse not found", 404
-#     inventory = Inventory(product_id=product.id, warehouse_id=warehouse.id, quantity=10)
-#     db.session.add(inventory)
-#     db.session.commit()
-#
-#     return "Inventory added successfully", 200

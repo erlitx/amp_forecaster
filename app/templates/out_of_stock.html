@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 
+{% block head %}
+    {{ super() }}
+    {{ moment.include_moment() }}
+
+{% endblock %}
+
 {% block content %}
 <div class="page-header" align="left">
 
@@ -8,8 +14,6 @@
 </div>
 
 <br/>
-<div class="container">
-
 
     <table class="table table-hover table-bordered table-striped">
         <tr style="background-color: lightgrey;">
@@ -31,26 +35,27 @@
             <td style="width: 100px;">QoH</td>
             <td style="width: 100px;">QoH</td>
         </tr>
-        <tr>
-            <td>{{ table_list["product_int_ref"] }}</td>
-            <td>{{ table_list["product_name"] }}</td>
-            <td>{{ table_list["quantity"] }}</td>
-            <td>{% if table_list["location_name"] == "AMPRU/Stock" %} {{ table_list["quantity"] }} {% endif %}</td>
-            <td>0</td>
-            <td>5</td>
-            <td>23</td>
-            <td>25</td>
-            <td>25</td>
-        </tr>
+
+        {% for product in inventory %}
+
+            <tr>
+                {% set date = '2023-03-23 08:24:36.085175' %}
+                <td>{{ product["product_int_ref"] }}</td>
+                <td>{{ product["product_name"] }}</td>
+                <td>-</td>
+                <td>{{ product.get("AMPRU/Stock")[0] }}</td>
+                <td>-</td>
+                <td>{{ product.get("PS/Prepair")[0] }}</td>
+                <td>{{ product.get("SS/Stock/Market")[0] }}</td>
+                <td>{{ product.get("SS/Stock/Edu")[0] }}</td>
+                <td>{{ product.get("PS/Kits")[0] }}</td>
+            </tr>
+        {% endfor %}
 
         </table>
+
+<div class="container">
+
 </div>
 
-<pre>
-    {{ inventory_list | safe }}
-</pre>
-<br/>
-<pre>
-    {{ inventory | safe }}
-</pre>
 {% endblock %}

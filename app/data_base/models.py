@@ -137,8 +137,10 @@ class Inventory(db.Model):
             })
 
         return result
+
+
     @staticmethod
-    def current_stock():
+    def current_stock_tableview():
         inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).all()
         warehouse_list = [item.location_name for item in db.session.query(Warehouse).all()]
         product_list = [item.int_ref for item in db.session.query(Product).all()]
@@ -155,6 +157,33 @@ class Inventory(db.Model):
                 if inventories is not None:
                     inventory.append(inventories.to_dict())
         return inventory
+
+    @staticmethod
+    def current_stock_nested():
+        inventory = []
+        for i, product in enumerate(db.session.query(Product).all()):
+            inventory.append({
+                'product_id': product.id,
+                'product_int_ref': product.int_ref,
+                'product_name': product.name,
+            })
+            for warehouse in db.session.query(Warehouse).all():
+                inventories = db.session.query(Inventory) \
+                                        .join(Product) \
+                                        .join(Warehouse) \
+                                        .filter(Product.int_ref == product.int_ref) \
+                                        .filter(Warehouse.location_name == warehouse.location_name) \
+                                        .order_by(desc(Inventory.inventory_date)) \
+                                        .first()
+                if inventories is not None:
+                    inventory[i][warehouse.location_name] = [inventories.quantity, inventories.inventory_date]
+        print(inventory[0])
+        return inventory
+    # Inventory return format:
+    # {'product_id': 1, 'product_int_ref': 'AMP-001', 'product_name': 'Motor Shield',
+    #  'AMPRU/Stock': [68, datetime.datetime(2023, 3, 23, 8, 24, 36, 85175)],
+    #  'PS/Prepair': [50, datetime.datetime(2023, 3, 22, 7, 31, 52, 937128)]}
+
 
     def __repr__(self):
         return '<Inventory: prod: {} qty: {} at {} on {}>'.format(self.product.int_ref, self.quantity,

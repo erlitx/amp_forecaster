@@ -42,16 +42,5 @@ def user(username):
 
 @main.route('/current_inventory', methods=['GET', 'POST'])
 def out_of_stock():
-    inventory = Inventory.current_stock()
-    warehouses = db.session.query(Warehouse).all()
-    products = db.session.query(Product).all()
-    warehouse_list = [warehouse.location_name for warehouse in warehouses]
-    product_list = [product.int_ref for product in products]
-
-    ### Old code ###
-    inventory_list = Inventory.get_inventory(int_ref='AMP-001', location_name='AMPRU/Stock')
-    json_list = jsonify(inventory_list)
-    json_list_data = json_list.get_data(as_text=True)
-    ################
-    return render_template('out_of_stock.html', inventory_list=json_list_data, table_list=inventory_list,
-                           inventory=inventory)
+    inventory = Inventory.current_stock_nested()
+    return render_template('out_of_stock.html', inventory=inventory)
