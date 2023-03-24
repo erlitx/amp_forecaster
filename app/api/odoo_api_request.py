@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import itertools
 
 
-def odoo_api_request():
+def odoo_api_get_inventory(products_num=1):
     def batch(iterable, size):
         "Split iterable by chunks of size (at max)"
         it = iter(iterable)
@@ -24,7 +24,7 @@ def odoo_api_request():
 
     ################
     # limit queries - 0 is no limit
-    MAX_PRODUCTS = 0
+    MAX_PRODUCTS = products_num
     MAX_LOCATIONS = 0
 
     # filter by this product ids (no ids = no filter)
@@ -70,7 +70,7 @@ def odoo_api_request():
     #  }
     product_datas = PP.read(
         product_ids,
-        ["display_name", "default_code", "categ_id", "qty_available", "sale_ok"],
+        ["name", "default_code", "categ_id", "qty_available", "sale_ok"],
     )
     print(f"Found {len(product_datas)} products")
 
@@ -156,9 +156,9 @@ def odoo_api_request():
 
     return result
 
-result = odoo_api_request()
-for key, value in result.items():
-    print(f"=============\nKey: {key}, Value: {value}")
+# result = odoo_api_get_inventory()
+# for key, value in result.items():
+#     print(f"=============\nKey: {key}, Value: {value}")
 
 
 # {'id': 17342, 'default_code': '0218010_MXP', 'categ_id': [4, 'All / Materials'], 'sale_ok': False, 'display_name': '[0218010_MXP] 0218010.MXP Предохранитель 10A 5.2x20 (аналог  021810_MXP)', 'qty_available': 577.0,

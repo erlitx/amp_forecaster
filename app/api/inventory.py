@@ -4,6 +4,7 @@ from ..data_base.models import Product, Warehouse, Inventory
 from werkzeug.security import generate_password_hash, check_password_hash
 from .. import db
 from sqlalchemy import desc, func
+from .odoo_api_request import odoo_api_get_inventory
 
 @api.route('/add_product/<string:int_ref>/<string:name>')
 def add_product(int_ref, name):
@@ -11,6 +12,11 @@ def add_product(int_ref, name):
     product_dict = product.to_dict()
     return jsonify(product_dict)
 
+#################
+@api.route('/add_product_from_odoo')
+def add_product_from_odoo():
+    return jsonify(Inventory.udpate_inventory_from_odoo(0))
+###################
 
 @api.route('/add_inventory/<string:int_ref>/<int:quantity>/<path:location_name>')
 def add_inventory(int_ref, quantity, location_name):
@@ -63,7 +69,7 @@ def get_product(int_ref):
 @api.route('/get_products')
 def get_products():
     products = Product.query.all()
-    products_list = [product.to_dict() for product in products]
+    products_list = [[product.int_ref, product.name] for product in products]
     return jsonify(products_list)
 
 @api.route('/warehouse')
