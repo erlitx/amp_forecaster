@@ -13,9 +13,14 @@ def add_product(int_ref, name):
     return jsonify(product_dict)
 
 #################
-@api.route('/add_product_from_odoo')
-def add_product_from_odoo():
+@api.route('/update_out_of_stock_from_odoo')
+def update_out_of_stock_from_odoo():
     return jsonify(Out_of_stock.update_inventory_from_odoo(0))
+###################
+
+@api.route('/nested_list_out_of_stock')
+def nested_list_out_of_stock():
+    return jsonify(Out_of_stock.current_stock_nested())
 ###################
 
 @api.route('/add_inventory/<string:int_ref>/<int:quantity>/<path:location_name>')

@@ -387,4 +387,42 @@ class Out_of_stock(db.Model):
         db.session.commit()
         return inventory
 
+    @staticmethod
+    def current_stock_nested():
+        inventory_list = []
 
+        inventories = db.session.query(Out_of_stock).join(Product).join(Warehouse)\
+            .order_by(desc(Out_of_stock.inventory_date)) \
+            .all()
+
+        for inventory in inventories:
+            print(inventory.inventory_date)
+            inventory_list.append({'inventory_date': inventory.inventory_date,
+                                   'int_ref': inventory.product.int_ref,
+                                   'name': inventory.product.name,
+                                    'location_name': inventory.warehouse.location_name
+                                   })
+
+        return inventory_list
+
+
+        # for i, product in enumerate(db.session.query(Product).all()):
+        #     inventory.append({
+        #         'product_id': product.id,
+        #         'product_int_ref': product.int_ref,
+        #         'product_name': product.name,
+        #     })
+        #     for warehouse in db.session.query(Warehouse).all():
+        #         inventories = db.session.query(Inventory) \
+        #                                 .join(Product) \
+        #                                 .join(Warehouse) \
+        #                                 .filter(Product.int_ref == product.int_ref) \
+        #                                 .filter(Warehouse.location_name == warehouse.location_name) \
+        #                                 .order_by(desc(Inventory.inventory_date)) \
+        #                                 .first()
+        #         # Check if there is an inventory for this product in this warehouse
+        #         # If there is, add it to the inventory list
+        #         if inventories is not None:
+        #             inventory[i][warehouse.location_name] = [inventories.quantity, inventories.inventory_date]
+        # print(inventory[0])
+        #return inventory
