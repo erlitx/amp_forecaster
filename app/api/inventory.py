@@ -1,6 +1,6 @@
 from flask import Response, json, jsonify, request, redirect, url_for
 from . import api
-from ..data_base.models import Product, Warehouse, Inventory
+from ..data_base.models import Product, Warehouse, Inventory, Out_of_stock
 from werkzeug.security import generate_password_hash, check_password_hash
 from .. import db
 from sqlalchemy import desc, func
@@ -15,7 +15,7 @@ def add_product(int_ref, name):
 #################
 @api.route('/add_product_from_odoo')
 def add_product_from_odoo():
-    return jsonify(Inventory.udpate_inventory_from_odoo(0))
+    return jsonify(Out_of_stock.update_inventory_from_odoo(0))
 ###################
 
 @api.route('/add_inventory/<string:int_ref>/<int:quantity>/<path:location_name>')

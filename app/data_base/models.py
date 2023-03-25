@@ -13,6 +13,7 @@ class Product(db.Model):
     categ_name = db.Column(db.String(128), index=True)
     sale_ok = db.Column(db.Boolean, default=True)
     inventory = db.relationship('Inventory', back_populates='product')
+    out_of_stock_inventory = db.relationship('Out_of_stock', back_populates='product')
 
 
     @staticmethod
@@ -46,6 +47,7 @@ class Warehouse(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     location_name = db.Column(db.String(64), unique=True, index=True)
     inventory = db.relationship('Inventory', back_populates='warehouse')
+    out_of_stock_inventory = db.relationship('Out_of_stock', back_populates='warehouse')
 
     @staticmethod
     def add_warehouse(location_name):
@@ -200,7 +202,7 @@ class Inventory(db.Model):
     # Method makes API request to Odoo and updates the Inventory table in the db
     # If products or warehouses do not exist in the db, they will be added through the add_product() and add_warehouse methods()
     @staticmethod
-    def udpate_inventory_from_odoo(product_num=1):
+    def update_inventory_from_odoo(product_num=1):
         # Get API request to Odoo
         from ..api.odoo_api_request import odoo_api_get_inventory
         odoo_inventory = odoo_api_get_inventory(product_num)
@@ -223,8 +225,8 @@ class Inventory(db.Model):
             # Check if product exists in db, if not add it
             product_check = db.session.query(Product).filter_by(int_ref=int_ref).first()
             if product_check is None:
-
                 Product.add_product(odoo_id, int_ref, name, categ_name, sale_ok)
+
             prod_id = db.session.query(Product).filter_by(int_ref=int_ref).first().id
 
             # Iterate over locations in 2nd level of nested  dict and add them to db if they don't exist
@@ -262,10 +264,127 @@ class Inventory(db.Model):
                 # Unpack inventory dict and add to db as individual args
                 Inventory.add_inventory(**inventory)
 
+                # Unpack inventory dict and add to db only if out of stock = True
+                # if quantity_available <= 0:
+                #     Out_of_stock.add_out_of_stock(**inventory)
+
         return products
 
 
     def __repr__(self):
         return '<Inventory: prod: {} qty: {} at {} on {}>'.format(self.product.int_ref, self.quantity,
                                                             self.warehouse.location_name, self.inventory_date)
+
+
+class Out_of_stock(db.Model):
+    __tablename__ = 'out_of_stock_products'
+    id = db.Column(db.Integer, primary_key=True)
+    quantity = db.Column(db.Integer)
+    quantity_reserved = db.Column(db.Integer)
+    quantity_available = db.Column(db.Integer)
+    inventory_date = db.Column(db.DateTime, default=datetime.utcnow)
+    out_of_stock = db.Column(db.Boolean, default=False)
+
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
+    warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouses.id'))
+    product = db.relationship('Product', back_populates='out_of_stock_inventory')
+    warehouse = db.relationship('Warehouse', back_populates='out_of_stock_inventory')
+
+    # Method makes API request to Odoo and updates the Inventory table in the db
+    # If products or warehouses do not exist in the db, they will be added through the add_product() and add_warehouse methods()
+    @staticmethod
+    def update_inventory_from_odoo(product_num=1):
+        # Get API request to Odoo
+        from ..api.odoo_api_request import odoo_api_get_inventory
+        odoo_inventory = odoo_api_get_inventory(product_num)
+        products = []
+        datetime_of_request = datetime.utcnow()
+
+        # Iterate over products in 1st level of dict and add them to db if they don't exist
+        for product in odoo_inventory.items():
+            int_ref = product[1].get('default_code')
+            odoo_id = product[1].get('id')
+            categ_name = product[1].get('categ_id')[1]
+            name = product[1].get('name')
+            sale_ok = product[1].get('sale_ok')
+
+
+            # Check if product category in a list of categories that we want to get
+            if categ_name not in ['All / Saleable']:
+                continue #if not in list, skip to next item in a dict
+
+            print(f'========\n{int_ref}\n{odoo_id}\n{categ_name}\n{name}\n{sale_ok}\n========')
+
+            # Check if product exists in db, if not add it
+            product_check = db.session.query(Product).filter_by(int_ref=int_ref).first()
+            if product_check is None:
+                Product.add_product(odoo_id, int_ref, name, categ_name, sale_ok)
+
+            # Get product id from db (now it's definitely exist because of previous check and creation)
+            prod_id = db.session.query(Product).filter_by(int_ref=int_ref).first().id
+
+            # Check dict if product in stock at AMPRU, make calculations to get quantity_available
+            ampru_location_check = product[1].get('qty_available_at_location')[141]     #get AMPRU location from dict
+            quantity = ampru_location_check.get('qty_available')
+            quantity_reserved = ampru_location_check.get('qty_reserved')
+            quantity_available = quantity - quantity_reserved
+            print(f'---\n{ampru_location_check}\n---')
+            print(f'-\t{quantity}\t{quantity_reserved}\t{quantity_available}-')
+
+            # If product is out of stock at AMPRU, do other stuff to get all locations qtys and write the results to db
+            # If product is in stock at AMPRU, skip to next product in a dict
+            if quantity_available <= 0:
+
+                # Iterate over locations in 2nd level of nested  dict and add them to db if they don't exist
+                for location in product[1].get('qty_available_at_location').values():
+                    location_name = location.get('display_name')
+
+                    # Check if warehouse exists in db, if not add it
+                    if db.session.query(Warehouse).filter_by(location_name=location_name).first() is None:
+                        Warehouse.add_warehouse(location_name)
+
+                    # Get warehouse id from db (now it's definitely exist because of previous check and creation)
+                    warehouse_id = db.session.query(Warehouse).filter_by(location_name=location_name).first().id
+                    quantity = location.get('qty_available')
+                    quantity_reserved = location.get('qty_reserved')
+                    quantity_available = quantity - quantity_reserved
+                    # Dict for view purposes
+                    inventory_view = {'product_id': prod_id,
+                                      'warehouse_id': warehouse_id,
+                                      'odoo_id': odoo_id,
+                                      'int_ref': int_ref,
+                                      'name': name, 'categ_name': categ_name,
+                                      'location_name': location_name,
+                                      'quantity': quantity,
+                                      'quantity_available': quantity_available,
+                                      'quantity_reserved': quantity_reserved,
+                                      'out_of_stock': quantity_available <= 0,
+                                      'sale_ok': sale_ok}
+                    products.append(inventory_view)
+
+                    # Dict to pass values to Inventory.add_inventory method
+                    inventory = {'product_id': prod_id,
+                                 'warehouse_id': warehouse_id,
+                                 'quantity': quantity,
+                                 'quantity_available': quantity_available,
+                                 'quantity_reserved': quantity_reserved,
+                                 'out_of_stock': quantity_available <= 0,
+                                 'inventory_date': datetime_of_request
+                                 }
+
+                    # Unpack inventory dict and add to db only if out of stock = True
+                    Out_of_stock.add_inventory(**inventory)
+
+        return products
+
+    @staticmethod
+    def add_inventory(product_id, warehouse_id, quantity, quantity_reserved,
+                      quantity_available, out_of_stock, inventory_date):
+        inventory = Out_of_stock(product_id=product_id, warehouse_id=warehouse_id, inventory_date=inventory_date,
+                              quantity=quantity, quantity_reserved=quantity_reserved,
+                              quantity_available=quantity_available, out_of_stock=out_of_stock)
+        db.session.add(inventory)
+        db.session.commit()
+        return inventory
+
 
