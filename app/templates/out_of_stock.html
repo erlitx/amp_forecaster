@@ -22,7 +22,7 @@
 
     <table class="table table-hover table-bordered table-striped">
         <tr style="background-color: lightgrey;">
-            <th rowspan="2" style="width: 150px;">Int Ref</th>
+            <th rowspan="2" colspan="2" style="width: 150px;">Int Ref</th>
             <th rowspan="2" style="width: 350px;">Name</th>
             <th colspan="3" >AMPRU/Stock</th>
             <th>PS/Prepair</th>
@@ -44,7 +44,7 @@
         {% for product in inventory %}
 
             <tr>
-                {% set date = '2023-03-23 08:24:36.085175' %}
+                <td>{{ loop.index }}</td>
                 <td>{{ product["product_int_ref"] }}</td>
                 <td>{{ product["product_name"] }}</td>
                 <td>{{ product.get("AMPRU/Stock")[1] }}</td>

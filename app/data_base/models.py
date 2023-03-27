@@ -319,6 +319,11 @@ class Out_of_stock(db.Model):
             product_check = db.session.query(Product).filter_by(int_ref=int_ref).first()
             if product_check is None:
                 Product.add_product(odoo_id, int_ref, name, categ_name, sale_ok)
+                product_check = db.session.query(Product).filter_by(int_ref=int_ref).first()
+            # Check if product name in db is the same as in Odoo, if not update it
+            elif product_check.name != name:
+                product_check.name = name
+                db.session.commit()
 
             # Get product id from db (now it's definitely exist because of previous check and creation)
             prod_id = db.session.query(Product).filter_by(int_ref=int_ref).first().id
@@ -335,7 +340,7 @@ class Out_of_stock(db.Model):
             # If product is in stock at AMPRU, skip to next product in a dict
             if quantity_available <= 0:
 
-                # Iterate over locations in 2nd level of nested  dict and add them to db if they don't exist
+                # Iterate over locations in 2nd level of nested  dict and add warehouse to db if they don't exist
                 for location in product[1].get('qty_available_at_location').values():
                     location_name = location.get('display_name')
 
@@ -391,21 +396,25 @@ class Out_of_stock(db.Model):
 
     @staticmethod
     def current_stock_nested():
+        # Get the latest inventory_date from Out_of_stock inventory_date column
+        latest_inventory_date = db.session.query(func.max(Out_of_stock.inventory_date)).scalar_subquery()
+
+        # Get all unique product_id from Out_of_stock product_id column filtered also by latest date (result is a list of tuples)
+        products = db.session.query(Out_of_stock.product_id)\
+                             .filter(Out_of_stock.inventory_date == latest_inventory_date)\
+                             .distinct().all()
+
         # Get all unique warehouses_id from Out_of_stock warehouse_id column (result is a list of tuples)
         warehouses = db.session.query(Out_of_stock.warehouse_id).distinct().all()
         # Put all warehouses_id in a list
         warehouse_list = [warehouse.warehouse_id for warehouse in warehouses]
 
-        # Get all unique product_id from Out_of_stock product_id column (result is a list of tuples)
-        products = db.session.query(Out_of_stock.product_id).distinct().all()
         # Put all product_id in a list
         product_list = [product.product_id for product in products]
         print(product_list)
 
-        # Get the latest inventory_date from Out_of_stock inventory_date column
-        latest_inventory_date = db.session.query(func.max(Out_of_stock.inventory_date)).scalar_subquery()
 
-        #Get the latest inventories for each warehouse
+        #Get the latest inventories for each warehouse and product
         inventories = db.session.query(Out_of_stock)\
                                 .join(Product)\
                                 .join(Warehouse) \
@@ -422,6 +431,8 @@ class Out_of_stock(db.Model):
 
         for i, product in enumerate(product_list):
             subquery = db.session.query(Product).filter(Product.id == product).first()
+
+            # Get the first latest inventory about product and any warehouse put in a list
             subquery2 = db.session.query(Out_of_stock) \
                 .join(Product) \
                 .join(Warehouse) \
@@ -432,6 +443,7 @@ class Out_of_stock(db.Model):
                                    'product_name': subquery.name,
                                    'date': subquery2.inventory_date})
 
+            # Get all latest inventories about product and all warehouse put in a list
             subquery2 = db.session.query(Out_of_stock) \
                 .join(Product) \
                 .join(Warehouse) \
@@ -441,7 +453,10 @@ class Out_of_stock(db.Model):
             for item in subquery2:
                 inventory_list[i][item.warehouse.location_name] = [item.quantity, item.quantity_available, item.quantity_reserved]
 
+        # Get the latest inventory_date from Out_of_stock inventory_date column
         inventory_date = db.session.query(func.max(Out_of_stock.inventory_date)).scalar()
+
+        # Return a list of dictionaries with a dict of latest inventories and one value of the latest inventory_date
         return [inventory_list, inventory_date]
 
 
