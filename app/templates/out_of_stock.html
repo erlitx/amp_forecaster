@@ -9,7 +9,12 @@
 {% block content %}
 <div class="page-header" align="left">
 
-    <h3>Out of stock</h3>
+    <h3>Out of Stock Products</h3>
+    <p>Updated {{ moment(date).fromNow() }}: {{ date.strftime('%B %d, %Y %H:%M:%S') }}</p>
+<form method="POST" action="{{ url_for('api.update_out_of_stock_from_odoo_nested') }}">
+            {{ form.hidden_tag()}}
+            {{ form.submit(class="btn btn-secondary") }}
+</form>
 
 </div>
 
@@ -17,8 +22,8 @@
 
     <table class="table table-hover table-bordered table-striped">
         <tr style="background-color: lightgrey;">
-            <th rowspan="2" style="width: 100px;">Int Ref</th>
-            <th rowspan="2" style="width: 200px;">Name</th>
+            <th rowspan="2" style="width: 150px;">Int Ref</th>
+            <th rowspan="2" style="width: 350px;">Name</th>
             <th colspan="3" >AMPRU/Stock</th>
             <th>PS/Prepair</th>
             <th>SS/Market</th>
@@ -42,9 +47,9 @@
                 {% set date = '2023-03-23 08:24:36.085175' %}
                 <td>{{ product["product_int_ref"] }}</td>
                 <td>{{ product["product_name"] }}</td>
-                <td>-</td>
+                <td>{{ product.get("AMPRU/Stock")[1] }}</td>
                 <td>{{ product.get("AMPRU/Stock")[0] }}</td>
-                <td>-</td>
+                <td>{{ product.get("AMPRU/Stock")[2] }}</td>
                 <td>{{ product.get("PS/Prepair")[0] }}</td>
                 <td>{{ product.get("SS/Stock/Market")[0] }}</td>
                 <td>{{ product.get("SS/Stock/Edu")[0] }}</td>

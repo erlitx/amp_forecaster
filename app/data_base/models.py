@@ -323,7 +323,7 @@ class Out_of_stock(db.Model):
             # Get product id from db (now it's definitely exist because of previous check and creation)
             prod_id = db.session.query(Product).filter_by(int_ref=int_ref).first().id
 
-            # Check dict if product in stock at AMPRU, make calculations to get quantity_available
+            # Check dict if product is in stock at AMPRU, make calculations to get quantity_available
             ampru_location_check = product[1].get('qty_available_at_location')[141]     #get AMPRU location from dict
             quantity = ampru_location_check.get('qty_available')
             quantity_reserved = ampru_location_check.get('qty_reserved')
@@ -359,7 +359,9 @@ class Out_of_stock(db.Model):
                                       'quantity_available': quantity_available,
                                       'quantity_reserved': quantity_reserved,
                                       'out_of_stock': quantity_available <= 0,
-                                      'sale_ok': sale_ok}
+                                      'sale_ok': sale_ok,
+                                      'inventory_date': datetime_of_request
+                                      }
                     products.append(inventory_view)
 
                     # Dict to pass values to Inventory.add_inventory method
@@ -389,40 +391,74 @@ class Out_of_stock(db.Model):
 
     @staticmethod
     def current_stock_nested():
+        # Get all unique warehouses_id from Out_of_stock warehouse_id column (result is a list of tuples)
+        warehouses = db.session.query(Out_of_stock.warehouse_id).distinct().all()
+        # Put all warehouses_id in a list
+        warehouse_list = [warehouse.warehouse_id for warehouse in warehouses]
+
+        # Get all unique product_id from Out_of_stock product_id column (result is a list of tuples)
+        products = db.session.query(Out_of_stock.product_id).distinct().all()
+        # Put all product_id in a list
+        product_list = [product.product_id for product in products]
+        print(product_list)
+
+        # Get the latest inventory_date from Out_of_stock inventory_date column
+        latest_inventory_date = db.session.query(func.max(Out_of_stock.inventory_date)).scalar_subquery()
+
+        #Get the latest inventories for each warehouse
+        inventories = db.session.query(Out_of_stock)\
+                                .join(Product)\
+                                .join(Warehouse) \
+                                .filter(Out_of_stock.inventory_date == latest_inventory_date) \
+                                .all()
+        #Test subquery
+        # subquery = db.session.query(Out_of_stock)\
+        #                         .join(Product)\
+        #                         .join(Warehouse) \
+        #                         .filter(Out_of_stock.inventory_date == latest_inventory_date) \
+        #                         .subquery()
+
         inventory_list = []
 
-        inventories = db.session.query(Out_of_stock).join(Product).join(Warehouse)\
-            .order_by(desc(Out_of_stock.inventory_date)) \
-            .all()
+        for i, product in enumerate(product_list):
+            subquery = db.session.query(Product).filter(Product.id == product).first()
+            subquery2 = db.session.query(Out_of_stock) \
+                .join(Product) \
+                .join(Warehouse) \
+                .filter(Out_of_stock.inventory_date == latest_inventory_date, Out_of_stock.product_id == product) \
+                .first()
+            inventory_list.append({'product_odoo_id': subquery.odoo_id,
+                                   'product_int_ref': subquery.int_ref,
+                                   'product_name': subquery.name,
+                                   'date': subquery2.inventory_date})
 
-        for inventory in inventories:
-            print(inventory.inventory_date)
-            inventory_list.append({'inventory_date': inventory.inventory_date,
-                                   'int_ref': inventory.product.int_ref,
-                                   'name': inventory.product.name,
-                                    'location_name': inventory.warehouse.location_name
-                                   })
+            subquery2 = db.session.query(Out_of_stock) \
+                .join(Product) \
+                .join(Warehouse) \
+                .filter(Out_of_stock.inventory_date == latest_inventory_date, Out_of_stock.product_id == product) \
+                .all()
 
-        return inventory_list
+            for item in subquery2:
+                inventory_list[i][item.warehouse.location_name] = [item.quantity, item.quantity_available, item.quantity_reserved]
+
+        inventory_date = db.session.query(func.max(Out_of_stock.inventory_date)).scalar()
+        return [inventory_list, inventory_date]
 
 
-        # for i, product in enumerate(db.session.query(Product).all()):
-        #     inventory.append({
-        #         'product_id': product.id,
-        #         'product_int_ref': product.int_ref,
-        #         'product_name': product.name,
-        #     })
-        #     for warehouse in db.session.query(Warehouse).all():
-        #         inventories = db.session.query(Inventory) \
-        #                                 .join(Product) \
-        #                                 .join(Warehouse) \
-        #                                 .filter(Product.int_ref == product.int_ref) \
-        #                                 .filter(Warehouse.location_name == warehouse.location_name) \
-        #                                 .order_by(desc(Inventory.inventory_date)) \
-        #                                 .first()
-        #         # Check if there is an inventory for this product in this warehouse
-        #         # If there is, add it to the inventory list
-        #         if inventories is not None:
-        #             inventory[i][warehouse.location_name] = [inventories.quantity, inventories.inventory_date]
-        # print(inventory[0])
-        #return inventory
+# specific_product_id = 1  # Replace with the desired product_id
+#
+# # Subquery with the first filter condition (latest_inventory_date)
+# subquery = (
+#     db.session.query(Out_of_stock)
+#     .join(Product)
+#     .join(Warehouse)
+#     .filter(Out_of_stock.inventory_date == latest_inventory_date)
+#     .subquery()
+# )
+#
+# # Main query using the subquery and applying the second filter condition (specific_product_id)
+# inventories = (
+#     db.session.query(subquery)
+#     .filter(subquery.c.product_id == specific_product_id)
+#     .all()
+# )

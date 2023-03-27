@@ -6,6 +6,7 @@ from .. import db
 from sqlalchemy import desc, func
 from .odoo_api_request import odoo_api_get_inventory
 
+
 @api.route('/add_product/<string:int_ref>/<string:name>')
 def add_product(int_ref, name):
     product = Product.add_product(int_ref=int_ref, name=name)
@@ -15,8 +16,15 @@ def add_product(int_ref, name):
 #################
 @api.route('/update_out_of_stock_from_odoo')
 def update_out_of_stock_from_odoo():
+
     return jsonify(Out_of_stock.update_inventory_from_odoo(0))
-###################
+
+# Update Out_of_stock table from Odoo, return to out_of_stock page
+@api.route('/update_out_of_stock_from_odoo_nested', methods=['GET', 'POST'])
+def update_out_of_stock_from_odoo_nested():
+    Out_of_stock.update_inventory_from_odoo(0)
+    return redirect(url_for('main.out_of_stock'))
+
 
 @api.route('/nested_list_out_of_stock')
 def nested_list_out_of_stock():

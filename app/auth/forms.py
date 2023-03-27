@@ -18,8 +18,6 @@ class RoleForm(FlaskForm):
     name = StringField('Role Name', validators=[DataRequired(), Length(1, 64)])
     submit = SubmitField('Register')
 
-
-
 class UserForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
     username = StringField('Username', validators=[DataRequired(), Length(1, 64)])
@@ -48,3 +46,6 @@ class RegistrationForm(FlaskForm):
     def validate_username(self, field):
         if User.query.filter_by(username=field.data).first():
             raise ValidationError('Username already in use.')
+
+class OutOfStock(FlaskForm):
+    submit = SubmitField('Refresh')
