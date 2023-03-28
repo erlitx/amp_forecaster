@@ -100,7 +100,7 @@ def register_user():
             # Hash the password
             hashed_pw = generate_password_hash(form_user.password.data, 'sha256')
             user = User(username=form_user.username.data, email=form_user.email.data,
-                        password_hash=hashed_pw, role_id=form_user.role.data)
+                        password_hash=hashed_pw, role_id=Role.query.filter_by(name=form_user.role.data).first().id)
             db.session.add(user)
             db.session.commit()
 

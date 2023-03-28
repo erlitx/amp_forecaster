@@ -36,7 +36,7 @@ class RegistrationForm(FlaskForm):
                'underscores')])
     password = PasswordField('Password', validators=[DataRequired(), equal_to('password2', message='Passwords must match.')])
     password2 = PasswordField('Confirm password', validators=[DataRequired()])
-    role = SelectField('Role', choices=[('1', 'Admin'), ('3', 'User')])
+    role = SelectField('Role', choices=[('Admin', 'Admin'), ('User', 'User')])
     submit = SubmitField('Register')
 
     def validate_email(self, field):
