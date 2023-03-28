@@ -4,7 +4,7 @@ from config import config
 from flask_migrate import Migrate
 from app.models import User
 
-config_name = 'default'
+config_name = 'development'
 app = create_app(config_name)
 
 #Set database migration

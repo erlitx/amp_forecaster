@@ -18,10 +18,22 @@ class Config:
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     PORT = 5050
-    DEBUG = True
+
     @staticmethod
     def init_app(app):
         pass
 
+class DevelopmentConfig(Config):
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
 
-config = {'default': Config}
+
+class TestingConfig(Config):
+    os.environ.get('SQLALCHEMY_DATABASE_URI')
+
+
+class ProductionConfig(Config):
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
+
+config = {'default': Config, 'development': DevelopmentConfig, 'testing': TestingConfig, 'production': ProductionConfig}

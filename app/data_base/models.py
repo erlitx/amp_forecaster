@@ -12,6 +12,7 @@ class Product(db.Model):
     name = db.Column(db.String(128), unique=False, index=True)
     categ_name = db.Column(db.String(128), index=True)
     sale_ok = db.Column(db.Boolean, default=True)
+    odoo_tmpl_id = db.Column(db.Integer, index=True)
     inventory = db.relationship('Inventory', back_populates='product')
     out_of_stock_inventory = db.relationship('Out_of_stock', back_populates='product')
 
@@ -25,6 +26,19 @@ class Product(db.Model):
         db.session.add(product)
         db.session.commit()
         return product
+
+    @staticmethod
+    def update_odoo_tmpl_id():
+        id_list = Product.query.with_entities(Product.odoo_id).all()
+        id_list = [record[0] for record in id_list]
+        from ..api.odoo_api_request import get_odoo_tmp_id
+        product_list = get_odoo_tmp_id(id_list)
+        for product_item in product_list:
+            product = Product.query.filter_by(odoo_id=product_item['odoo_id']).first()
+            if product:
+                product.odoo_tmpl_id = product_item['odoo_tmpl_id']
+                db.session.commit()
+        return True
 
     def to_dict(self):
         return {
@@ -284,7 +298,6 @@ class Out_of_stock(db.Model):
     quantity_available = db.Column(db.Integer)
     inventory_date = db.Column(db.DateTime, default=datetime.utcnow)
     out_of_stock = db.Column(db.Boolean, default=False)
-
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouses.id'))
     product = db.relationship('Product', back_populates='out_of_stock_inventory')
@@ -323,6 +336,9 @@ class Out_of_stock(db.Model):
             # Check if product name in db is the same as in Odoo, if not update it
             elif product_check.name != name:
                 product_check.name = name
+                db.session.commit()
+            elif product_check.categ_name != categ_name:
+                product_check.categ_name = categ_name
                 db.session.commit()
 
             # Get product id from db (now it's definitely exist because of previous check and creation)
@@ -394,6 +410,7 @@ class Out_of_stock(db.Model):
         db.session.commit()
         return inventory
 
+    # Return a nested dict with all {products: {and their locations]} from Out_of_stock table
     @staticmethod
     def current_stock_nested():
         # Get the latest inventory_date from Out_of_stock inventory_date column
@@ -439,6 +456,7 @@ class Out_of_stock(db.Model):
                 .filter(Out_of_stock.inventory_date == latest_inventory_date, Out_of_stock.product_id == product) \
                 .first()
             inventory_list.append({'product_odoo_id': subquery.odoo_id,
+                                   'product_odoo_tmpl_id': subquery.odoo_tmpl_id,
                                    'product_int_ref': subquery.int_ref,
                                    'product_name': subquery.name,
                                    'date': subquery2.inventory_date})

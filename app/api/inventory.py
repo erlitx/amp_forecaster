@@ -13,7 +13,6 @@ def add_product(int_ref, name):
     product_dict = product.to_dict()
     return jsonify(product_dict)
 
-#################
 @api.route('/update_out_of_stock_from_odoo')
 def update_out_of_stock_from_odoo():
 
@@ -24,6 +23,11 @@ def update_out_of_stock_from_odoo():
 def update_out_of_stock_from_odoo_nested():
     Out_of_stock.update_inventory_from_odoo(0)
     return redirect(url_for('main.out_of_stock'))
+
+@api.route('/update_odoo_tmpl')
+def update_odoo_tmpl():
+    result = Product.update_odoo_tmpl_id()
+    return 'ok'
 
 
 @api.route('/nested_list_out_of_stock')
@@ -126,27 +130,27 @@ def current_inventory2():
     return jsonify(inventory)
 
 # Testing
-@api.route('/test_query/<string:int_ref>')
-def test_query(int_ref):
-    # inventory = (db.session.query(Inventory).join(Product).filter(Product.int_ref == int_ref).first())
-    # inventory = db.session.query(Inventory).filter(Inventory.inventory_date >= '2023-03-22 09:00:00').all()
-    inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).all()
-    # inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).limit(1).all()
-    # inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).first()
-    warehouse_list = [item.location_name for item in db.session.query(Warehouse).all()]
-    product_list = [item.int_ref for item in db.session.query(Product).all()]
-    print(warehouse_list)
-    print(product_list)
-    inventory = []
-    for warehouse in warehouse_list:
-        for product in product_list:
-            inventories = db.session.query(Inventory)\
-                        .join(Product)\
-                        .join(Warehouse)\
-                        .filter(Product.int_ref == product)\
-                        .filter(Warehouse.location_name == warehouse)\
-                        .order_by(desc(Inventory.inventory_date))\
-                        .first()
-            if inventories is not None:
-                inventory.append(inventories.to_dict())
-    return jsonify(inventory)
+# @api.route('/test_query/<string:int_ref>')
+# def test_query(int_ref):
+#     # inventory = (db.session.query(Inventory).join(Product).filter(Product.int_ref == int_ref).first())
+#     # inventory = db.session.query(Inventory).filter(Inventory.inventory_date >= '2023-03-22 09:00:00').all()
+#     inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).all()
+#     # inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).limit(1).all()
+#     # inventory = db.session.query(Inventory).order_by(desc(Inventory.inventory_date)).first()
+#     warehouse_list = [item.location_name for item in db.session.query(Warehouse).all()]
+#     product_list = [item.int_ref for item in db.session.query(Product).all()]
+#     print(warehouse_list)
+#     print(product_list)
+#     inventory = []
+#     for warehouse in warehouse_list:
+#         for product in product_list:
+#             inventories = db.session.query(Inventory)\
+#                         .join(Product)\
+#                         .join(Warehouse)\
+#                         .filter(Product.int_ref == product)\
+#                         .filter(Warehouse.location_name == warehouse)\
+#                         .order_by(desc(Inventory.inventory_date))\
+#                         .first()
+#             if inventories is not None:
+#                 inventory.append(inventories.to_dict())
+#     return jsonify(inventory)

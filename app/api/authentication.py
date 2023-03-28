@@ -10,12 +10,17 @@ auth_api = HTTPBasicAuth()
 @auth_api.verify_password
 def verify_password(username, password):
     # Here, you should verify the provided username and password against your user database.
-    # For demonstration purposes, we are using a simple check.
-    if username == 'erlit007' and password == '123':
+    # Ask browser to requery username and password. Withput this line, the browser will not ask for username and password
+    if username and password:
         user = User.query.filter_by(username=username).first()
+        if user.verify_password(password):
+            g.user = user
+            return True
+        return False
+
         session['user_id'] = user.id
         return True
-    return False
+    #return False
 
 
 # This route function requires authentication
@@ -28,18 +33,6 @@ def verify_password(username, password):
 def secure_route():
     return 'You are logged in'
 
-
-# @api.route('/secure')
-# @auth_api.login_required
-# def secure_route():
-#     if session['user_id'] is None:
-#         return 'Not user_id in session'
-#     user_id = session.get('user_id')
-#     user = User.query.get(user_id)
-#     token = user.generate_auth_token()
-#
-#     user_token_verified = User.verify_auth_token(token)
-#     return jsonify({'user_id': user_token_verified.id, 'user_token_verified': user_token_verified.username, 'token': token})
 
 @api.route('/get_token')
 def get_token():

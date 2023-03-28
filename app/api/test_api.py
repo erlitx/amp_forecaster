@@ -156,45 +156,11 @@ def odoo_api_get_inventory(products_num=1):
 
     return result
 
-def get_odoo_tmp_id(id_list):
-    load_dotenv()
-    HOST = environ.get("ODOO_HOSTNAME", "backoffice.amperka.ru")
-    PORT = int(environ.get("ODOO_PORT", "443"))
-    DATABASE = environ.get("ODOO_DATABASE", "production")
-    USERNAME = environ["ODOO_USERNAME"]
-    PASSWORD = environ["ODOO_PASSWORD"]
+result = odoo_api_get_inventory()
+print(result)
 
-    ################
-    # limit queries - 0 is no limit
-
-    MAX_LOCATIONS = 0
-
-    # filter by this product ids (no ids = no filter)
-    PRODUCT_IDS_FILTER = []
-    LOCATION_IDS_FILTER = [141, 20, 58, 174, 59]
-    ###########
-
-    # inititalize json rpc client
-    env = Client(
-        HOST,
-        DATABASE,
-        USERNAME,
-        PASSWORD,
-        PORT,
-        protocol="json-rpcs" if PORT == 443 else "json-rpc",
-    )
-
-    PP = env["product.product"]
-    product_ids = PP.search_records([('id', 'in', id_list)])
-    result = []
-    for product_id in product_ids:
-        result.append({'odoo_id': product_id.id, 'odoo_tmpl_id': product_id.product_tmpl_id.id})
-        #
-        # print(f'{product_id.id}\t{product_id.default_code}\t{product_id.name}'
-        #       f'\t{product_id.categ_id.name}\t{product_id.product_tmpl_id.id}')
-    return result
-
-
+# for key, value in result.items():
+#     print(f"=============\nKey: {key}, Value: {value}")
 
 
 # {'id': 17342, 'default_code': '0218010_MXP', 'categ_id': [4, 'All / Materials'], 'sale_ok': False, 'display_name': '[0218010_MXP] 0218010.MXP Предохранитель 10A 5.2x20 (аналог  021810_MXP)', 'qty_available': 577.0,

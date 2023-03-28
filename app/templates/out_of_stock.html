@@ -7,10 +7,12 @@
 {% endblock %}
 
 {% block content %}
+
+
 <div class="page-header" align="left">
 
     <h3>Out of Stock Products</h3>
-    <p>Updated {{ moment(date).fromNow() }}: {{ date.strftime('%B %d, %Y %H:%M:%S') }}</p>
+    <p>Updated {{ moment(date).fromNow() }}: {{ date.strftime('%B %d, %Y %H:%M:%S') }} (UTC)</p>
 <form method="POST" action="{{ url_for('api.update_out_of_stock_from_odoo_nested') }}">
             {{ form.hidden_tag()}}
             {{ form.submit(class="btn btn-secondary") }}
@@ -45,7 +47,7 @@
 
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ product["product_int_ref"] }}</td>
+                <td><a href="https://backoffice.amperka.ru/web#id={{ product['product_odoo_tmpl_id'] }}&view_type=form&model=product.template&action=170&menu_id=83" target="_blank">{{ product["product_int_ref"] }}</a></td>
                 <td>{{ product["product_name"] }}</td>
                 <td>{{ product.get("AMPRU/Stock")[1] }}</td>
                 <td>{{ product.get("AMPRU/Stock")[0] }}</td>
