@@ -73,10 +73,11 @@ def login():
 def logout():
     logout_user()
     flash('You have been logged out.')
-    return redirect(url_for('main.index'))
+    return redirect(url_for('auth.login'))
 
 
 @auth.route('/register_role', methods=['GET', 'POST'])
+@login_required
 def register_role():
     roles = Role.query.order_by(Role.id).all()
     form_role = RoleForm()
@@ -92,41 +93,43 @@ def register_role():
 
 
 @auth.route('/register_user', methods=['GET', 'POST'])
+@login_required
 def register_user():
     users = User.query.order_by(User.id).all()
     form_user = RegistrationForm()
     if form_user.validate_on_submit():
-        user = User.query.filter_by(email=form_user.email.data).first()
-        if user is None:
+        if current_user.role.name == "Superuser":
+            user = User.query.filter_by(email=form_user.email.data).first()
+            if user is None:
 
-            # Create a superuser with role Superuser
-            if form_user.email.data == os.environ.get('SUPERUSER_EMAIL'):
-                role = Role.query.filter_by(name='Superuser').first()
-                if not role:
-                    role = Role(name='Superuser')
-                    db.session.add(role)
+                # Create a superuser with role Superuser
+                if form_user.email.data == os.environ.get('SUPERUSER_EMAIL'):
+                    role = Role.query.filter_by(name='Superuser').first()
+                    if not role:
+                        role = Role(name='Superuser')
+                        db.session.add(role)
+                        db.session.commit()
+                    user = User(username=form_user.username.data, email=os.environ.get('SUPERUSER_EMAIL'),
+                                password_hash=generate_password_hash(os.environ.get('SUPERUSER_PASSWORD'), 'sha256'), role_id=role.id,
+                                confirmed=True)
+                    db.session.add(user)
                     db.session.commit()
-                user = User(username=form_user.username.data, email=os.environ.get('SUPERUSER_EMAIL'),
-                            password_hash=generate_password_hash(os.environ.get('SUPERUSER_PASSWORD'), 'sha256'), role_id=role.id,
-                            confirmed=True)
-                db.session.add(user)
-                db.session.commit()
-                flash('Superuser created')
-                return redirect(url_for('auth.login'))
-            else:
-                # Hash the password
-                hashed_pw = generate_password_hash(form_user.password.data, 'sha256')
-                user = User(username=form_user.username.data, email=form_user.email.data,
-                            password_hash=hashed_pw, role_id=Role.query.filter_by(name=form_user.role.data).first().id)
-                db.session.add(user)
-                db.session.commit()
+                    flash('Superuser created')
+                    return redirect(url_for('auth.login'))
+                else:
+                    # Hash the password
+                    hashed_pw = generate_password_hash(form_user.password.data, 'sha256')
+                    user = User(username=form_user.username.data, email=form_user.email.data,
+                                password_hash=hashed_pw, role_id=Role.query.filter_by(name=form_user.role.data).first().id)
+                    db.session.add(user)
+                    db.session.commit()
 
-                # Generate a confirmation token with user.generate_confirmation_token() method from models.py
-                token = user.generate_confirmation_token()
-                send_email(user.email, 'Confirm Your Account',
-                           'auth/email/confirm', user=user, token=token)
-                flash(f'A confirmation email has been sent to {user.email}')
-                return redirect(url_for('auth.login'))
+                    # Generate a confirmation token with user.generate_confirmation_token() method from models.py
+                    token = user.generate_confirmation_token()
+                    send_email(user.email, 'Confirm Your Account',
+                               'auth/email/confirm', user=user, token=token)
+                    flash(f'A confirmation email has been sent to {user.email}')
+                    return redirect(url_for('auth.login'))
     return render_template('auth/register_user.html', form_user=form_user, users=users)
 
 

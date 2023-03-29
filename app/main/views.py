@@ -1,9 +1,8 @@
 import json
-
 from flask import render_template, current_app, session, flash, redirect, url_for, request, jsonify
 # Import the Blueprint object from main/__init__.py
 from . import main, errors
-from ..models import User
+from ..models import User, Role
 from ..data_base.models import Product, Warehouse, Inventory, Out_of_stock
 from .. import db
 from ..auth.forms import UserForm, AboutForm, OutOfStock
@@ -11,11 +10,9 @@ from flask_login import login_required, current_user
 from datetime import datetime
 import pytz
 
-
-@main.route('/')
+@main.route('/main')
 def index():
-    return render_template('index.html')
-
+    return redirect(url_for('main.out_of_stock'))
 
 @main.route('/user/<username>', methods=['GET', 'POST'])
 @login_required
@@ -33,7 +30,8 @@ def user(username):
     return render_template('user.html', user=user, form=form, form_about=form_about)
 
 
-@main.route('/current_inventory', methods=['GET', 'POST'])
+@main.route('/', methods=['GET', 'POST'])
+@login_required
 def out_of_stock():
     form = OutOfStock()
     #Get nestet dict of all out_of_stock products
@@ -41,4 +39,10 @@ def out_of_stock():
     #Get date from last update from nested dict
     date = Out_of_stock.current_stock_nested()[1]
     return render_template('out_of_stock.html', inventory=inventory, date=date, form=form)
+
+@main.route('/admin_panel', methods=['GET', 'POST'])
+@login_required
+def admin_panel():
+
+    return render_template('admin_panel.html', users=User.query.all(), roles=Role.query.all())
 
