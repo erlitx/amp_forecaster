@@ -35,6 +35,7 @@ class User(db.Model, UserMixin):
     member_since = db.Column(db.DateTime(), default=datetime.utcnow)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
+
     @staticmethod
     def create_user(username, email, password, role_id):
         user = User(username=username, email=email, password_hash=password, role_id=role_id, confirmed=True)
