@@ -127,8 +127,6 @@ def register_user():
                            'auth/email/confirm', user=user, token=token)
                 flash(f'A confirmation email has been sent to {user.email}')
                 return redirect(url_for('auth.login'))
-
-
     return render_template('auth/register_user.html', form_user=form_user, users=users)
 
 
