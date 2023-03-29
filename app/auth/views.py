@@ -93,7 +93,6 @@ def register_role():
 
 
 @auth.route('/register_user', methods=['GET', 'POST'])
-@login_required
 def register_user():
     users = User.query.order_by(User.id).all()
     form_user = RegistrationForm()
