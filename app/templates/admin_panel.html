@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>Admin panel</h3>
+<br/>
+<div>
+    <div class="page-header" align="left">
+
+    <h4>User list:</h4>
+
+    </div>
+
+    <div class="container">
+        <table  width="300px" class="table table-hover table-bordered table-striped">
+        <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Confirmed</th>
+            <th>Last Seen</th>
+            <th>Member Since</th>
+            <th>Action</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.role.name }}</td>
+            <td>{{ user.confirmed }}</td>
+            <td>{{ user.last_seen.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td>{{ user.member_since.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td><a href="{{ url_for('auth.delete_user', id=user.id) }}">delete</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+</div>
+<br/>
+<h4>Role list:</h4>
+<div class="container">
+    <table  width="300px" class="table table-hover table-bordered table-striped">
+        <tr>
+            <th>ID</th>
+            <th>Role name</th>
+            <th>Action</th>
+        </tr>
+        {% for role in roles %}
+        <tr>
+            <td>{{ role.id }}</td>
+            <td>{{ role.name }}</td>
+            <td><a href="#">delete</a></td>
+        </tr>
+        {% endfor %}
+</div>
+
+{% endblock %}

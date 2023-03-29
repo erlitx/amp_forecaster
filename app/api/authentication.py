@@ -3,6 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 from ..models import User
 from . import api
 from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
+import os
 
 auth_api = HTTPBasicAuth()
 
@@ -21,6 +22,7 @@ def verify_password(username, password):
         session['user_id'] = user.id
         return True
     #return False
+
 
 
 # This route function requires authentication
