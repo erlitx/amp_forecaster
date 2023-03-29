@@ -7,6 +7,7 @@ from .forms import RoleForm, UserForm, RegistrationForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from .. import db
 from flask_login import login_user, logout_user, login_required, current_user
+import os
 from ..api.authentication import auth_api
 
 # This route takes two arguments, token and user_id (passed as **kwargs in the send_email func as user=user and token=token)
@@ -32,7 +33,7 @@ def confirm_noauth(token, user_id):
 @auth.route('/delete_user/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_user(id):
-    if current_user.role.name == "Admin":
+    if current_user.role.name == "Superuser":
         name = None
         form = UserForm()
         user_to_delete = User.query.get_or_404(id)
@@ -97,24 +98,37 @@ def register_user():
     if form_user.validate_on_submit():
         user = User.query.filter_by(email=form_user.email.data).first()
         if user is None:
-            # Hash the password
-            hashed_pw = generate_password_hash(form_user.password.data, 'sha256')
-            user = User(username=form_user.username.data, email=form_user.email.data,
-                        password_hash=hashed_pw, role_id=Role.query.filter_by(name=form_user.role.data).first().id)
-            db.session.add(user)
-            db.session.commit()
 
-            # Generate a confirmation token with user.generate_confirmation_token() method from models.py
-            token = user.generate_confirmation_token()
-            send_email(user.email, 'Confirm Your Account',
-                       'auth/email/confirm', user=user, token=token)
-            flash(f'A confirmation email has been sent to {user.email}')
-            return redirect(url_for('auth.login'))
+            # Create a superuser with role Superuser
+            if form_user.email.data == os.environ.get('SUPERUSER_EMAIL'):
+                role = Role.query.filter_by(name='Superuser').first()
+                if not role:
+                    role = Role(name='Superuser')
+                    db.session.add(role)
+                    db.session.commit()
+                user = User(username=form_user.username.data, email=os.environ.get('SUPERUSER_EMAIL'),
+                            password_hash=generate_password_hash(os.environ.get('SUPERUSER_PASSWORD'), 'sha256'), role_id=role.id,
+                            confirmed=True)
+                db.session.add(user)
+                db.session.commit()
+                flash('Superuser created')
+                return redirect(url_for('auth.login'))
+            else:
+                # Hash the password
+                hashed_pw = generate_password_hash(form_user.password.data, 'sha256')
+                user = User(username=form_user.username.data, email=form_user.email.data,
+                            password_hash=hashed_pw, role_id=Role.query.filter_by(name=form_user.role.data).first().id)
+                db.session.add(user)
+                db.session.commit()
 
-            flash(f'User {user.email} added')
-            return redirect(url_for('auth.register_user'))
+                # Generate a confirmation token with user.generate_confirmation_token() method from models.py
+                token = user.generate_confirmation_token()
+                send_email(user.email, 'Confirm Your Account',
+                           'auth/email/confirm', user=user, token=token)
+                flash(f'A confirmation email has been sent to {user.email}')
+                return redirect(url_for('auth.login'))
 
-    #role = Role(name='Admin')
+
     return render_template('auth/register_user.html', form_user=form_user, users=users)
 
 
