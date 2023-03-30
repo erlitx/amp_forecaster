@@ -1,4 +1,4 @@
-# Flask Application
+# Dashboard
 
 This is a Flask application that sends an API request to the Odoo database 
 using the `odoo_rpc_client` library to retrieve information about all products
