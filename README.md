@@ -97,3 +97,7 @@ This application is licensed under the MIT License. See LICENSE for more informa
 ## Authors
 
 - Mikhail Belogortsev (https://github.com/erlitx)
+
+
+###### App screenshot
+<img src="https://github.com/erlitx/Docs_manuals/blob/master/dashboard.png" alt="Example Image" width="800">
