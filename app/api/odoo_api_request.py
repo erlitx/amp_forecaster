@@ -16,9 +16,9 @@ def odoo_api_get_inventory(products_num=1):
 
 
     load_dotenv()
-    HOST = environ.get("ODOO_HOSTNAME", "backoffice.amperka.ru")
-    PORT = int(environ.get("ODOO_PORT", "443"))
-    DATABASE = environ.get("ODOO_DATABASE", "production")
+    HOST = environ.get("ODOO_HOSTNAME")
+    PORT = int(environ.get("ODOO_PORT"))
+    DATABASE = environ.get("ODOO_DATABASE")
     USERNAME = environ["ODOO_USERNAME"]
     PASSWORD = environ["ODOO_PASSWORD"]
 
@@ -158,9 +158,9 @@ def odoo_api_get_inventory(products_num=1):
 
 def get_odoo_tmp_id(id_list):
     load_dotenv()
-    HOST = environ.get("ODOO_HOSTNAME", "backoffice.amperka.ru")
-    PORT = int(environ.get("ODOO_PORT", "443"))
-    DATABASE = environ.get("ODOO_DATABASE", "production")
+    HOST = environ.get("ODOO_HOSTNAME")
+    PORT = int(environ.get("ODOO_PORT"))
+    DATABASE = environ.get("ODOO_DATABASE")
     USERNAME = environ["ODOO_USERNAME"]
     PASSWORD = environ["ODOO_PASSWORD"]
 

@@ -62,14 +62,18 @@ to `production` or `development`.
     MAIL_PASSWORD=<password>
 
 ###### Odoo account credentials
-    HOST=<url_to_odoo>
-    PORT=<port>
-    DATABASE=<production, staging or development>
+    ODOO_HOSTNAME=<url_to_odoo>
+    ODOO_PORT=<port>
+    ODOO_DATABASE=<production, staging or development>
     ODOO_USERNAME=<odoo_username>
     ODOO_PASSWORD=<odoo_password>
 
 ###### Scheduler Configuration (how often to send API requests to Odoo)
     INTERVAL_MINUTES=<int: minutes between each scheduler run>
+
+## Odoo API request
+Odoo API request is handled by odoo_api_get_inventory() function in the
+`app/api/odoo_api_request.py`
 
 ## Routes
 
