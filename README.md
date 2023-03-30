@@ -90,3 +90,10 @@ This route handles user registration. Users can create a new account by providin
 This route handles user authentication. Users can log in to their account by providing their email address and password.
 
 
+## License
+
+This application is licensed under the MIT License. See LICENSE for more information.
+
+## Authors
+
+- Mikhail Belogortsev (https://github.com/erlitx)
