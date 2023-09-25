@@ -16,7 +16,7 @@ migrate = Migrate(app, db)
 
 
 if __name__ == '__main__':
-    app.run(port=config[config_name].PORT, debug=config[config_name].DEBUG)
+    app.run(host='0.0.0.0', port=config[config_name].PORT, debug=config[config_name].DEBUG)
 
 
 #set first migration (run in terminal without flask shell)

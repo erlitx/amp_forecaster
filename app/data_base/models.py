@@ -478,6 +478,114 @@ class Out_of_stock(db.Model):
         return [inventory_list, inventory_date]
 
 
+
+class ProductsSaleable(db.Model):
+    __tablename__ = 'products_saleable'
+    id = db.Column(db.Integer, primary_key=True)
+    odoo_id = db.Column(db.Integer)
+    int_ref = db.Column(db.String(64))
+    product_name = db.Column(db.String(128))
+    quantity = db.Column(db.Integer)
+    quantity_reserved = db.Column(db.Integer)
+    quantity_available = db.Column(db.Integer)
+    inventory_date = db.Column(db.DateTime, default=datetime.utcnow)
+    out_of_stock = db.Column(db.Boolean, default=False)
+
+    def to_dict(self):
+        return {
+            "product_id": self.odoo_id,
+            "int_ref": self.int_ref,
+            "product_name": self.product_name,
+            "quantity": self.quantity,
+            "quantity_available": self.quantity_available,
+            "quantity_reserved": self.quantity_reserved,
+            "warehouse_location_name": self.warehouse.location_name,
+            "inventory_date": self.inventory_date
+        }
+
+    # Adds products to the db 'products_saleable' from Odoo API with args filter:
+    # categ_id: default = 2 (All / Saleable)
+    # num: default = 1 (number of products to get, 0 = all)
+    def get_saleable_products(self, num=1, categ_id=2):
+        from ..api.odoo_api_request import odoo_api_get_products, odoo_api_get_products_quants
+        try:
+            # get the list of products from Odoo with category = 2 (All / Saleable)
+            saleable_products = odoo_api_get_products(num, categ_id)
+
+            # get the product quants from Odoo
+            
+            datetime_of_request = datetime.utcnow()
+            product_list_ids = []
+            product_dict_ids = {}
+            quants_dict = {}
+            saleable_prod_list= []
+            for product in saleable_products:
+                print(f'---{product}')
+                if len(product.get('name')) > 128:
+                    product_name = product.get('name')[:126]
+                else:
+                    product_name = product.get('name')
+
+                product_list_ids.append(product.get('id'))
+                product_dict_ids[product.get('id')] = {'int_ref': product.get('default_code'),
+                                                       'name': product_name}
+            print(f'====={product_dict_ids}')
+
+            quants = odoo_api_get_products_quants(prod_list_ids=product_list_ids)
+
+            print(f'===+++=={quants}')
+
+            for data in quants:
+                product_id = data["product_id"][0]
+                location_id = data["location_id"][0]
+                # update quantity of product at location
+                qty_available = data["quantity"]
+                qty_reserved = data["reserved_quantity"]
+                #print(f'---{product_id}---{location_id}---{qty_available}---{qty_reserved}')
+                quants_dict[product_id] = {'location_id': location_id, 'qty_available': qty_available, 'qty_reserved': qty_reserved}
+
+                # saleable_prod = ProductsSaleable(odoo_id=product_id, int_ref=product_dict_ids.get(product_id).get('int_ref'),
+                                                #  product_name=product_dict_ids.get(product_id).get('name'), inventory_date=datetime_of_request,)
+
+            print(f'///====={quants_dict}')
+
+            #Compose final dict of quants based on product dict
+            for product_id, product_value in product_dict_ids.items():
+                
+                odoo_id = product_id
+                int_ref = product_value.get('int_ref')
+                product_name = product_value.get('name')
+                quantity=quants_dict.get(odoo_id, {}).get('qty_available')
+                if quantity is None:
+                    print("None--------")
+                    quantity = 0
+                    quantity_reserved = 0
+                    quantity_available = 0
+                else:
+                    quantity_reserved=quants_dict.get(odoo_id).get('qty_reserved')
+                    quantity_available=quantity-quantity_reserved
+                print(f'@@@---{odoo_id}---{int_ref}---{product_name}---{quantity}---{quantity_reserved}---{quantity_available}')
+
+                saleable_prod = ProductsSaleable(odoo_id=product_id, int_ref=product_value.get('int_ref'),
+                                                     product_name=product_value.get('name'),
+                                                     quantity=quantity, quantity_reserved=quantity_reserved,
+                                                     quantity_available=quantity_available, inventory_date=datetime_of_request)
+
+                db.session.add(saleable_prod)
+                db.session.commit()                
+            return product_list_ids
+        
+        except Exception as e:
+            print(e)
+            return False
+        
+
+
+
+
+
+
+
 # specific_product_id = 1  # Replace with the desired product_id
 #
 # # Subquery with the first filter condition (latest_inventory_date)
