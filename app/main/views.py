@@ -38,6 +38,10 @@ def out_of_stock():
     inventory = Out_of_stock.current_stock_nested()[0]
     #Get date from last update from nested dict
     date = Out_of_stock.current_stock_nested()[1]
+    #If no date, update inventory from Odoo
+    if date is None:
+        Out_of_stock.update_inventory_from_odoo(0)
+        date = Out_of_stock.current_stock_nested()[1]
     return render_template('out_of_stock.html', inventory=inventory, date=date, form=form)
 
 @main.route('/admin_panel', methods=['GET', 'POST'])

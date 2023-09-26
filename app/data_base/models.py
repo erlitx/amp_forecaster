@@ -480,7 +480,7 @@ class Out_of_stock(db.Model):
 
 
 class ProductsSaleable(db.Model):
-    __tablename__ = 'products_saleable'
+    __tablename__ = 'products_saleable_ampru'
     id = db.Column(db.Integer, primary_key=True)
     odoo_id = db.Column(db.Integer)
     int_ref = db.Column(db.String(64))
